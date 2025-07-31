@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Chosen Palette: Warm Neutrals & Slate Blue -->
-    <!-- Application Structure Plan: The application is structured into three main thematic sections: "行前准备" (Pre-trip Prep), "每日行程" (Daily Itinerary), and "风味指南" (Food Guide), accessible via a sticky top navigation. This non-linear structure allows users to quickly access the information they need, whether it's booking details, daily plans, or food recommendations. The "Pre-trip Prep" section uses an interactive checklist to make tasks actionable. The "Daily Itinerary" uses a day-by-day tabbed interface with clickable, expandable cards for each event, visually representing the "scientific" flow of the trip. This structure was chosen for superior usability and information synthesis compared to a linear document, allowing users to engage with the content based on their immediate needs. -->
-    <!-- Visualization & Content Choices: Report Info: Trip schedule and activities. -> Goal: Provide a high-level overview of the trip's focus. -> Viz/Presentation Method: A Doughnut chart from Chart.js. -> Interaction: Hover to see time allocation percentages. -> Justification: The chart visually summarizes the trip's balance between cultural exploration, dining, and transit, reinforcing the "well-planned" theme. Report Info: Pre-trip booking tasks. -> Goal: Make tasks actionable. -> Viz/Presentation Method: Interactive HTML checklist. -> Interaction: Click to mark as complete. -> Justification: Turns a static list into a practical tool. Report Info: Daily events. -> Goal: Organize complex daily schedules. -> Viz/Presentation Method: Expandable HTML/Tailwind cards with icons. -> Interaction: Click to reveal details. -> Justification: Manages information density, allowing users to drill down into details without being overwhelmed. Library/Method: Chart.js (Canvas), HTML/CSS/Tailwind, Vanilla JS. -->
+    <!-- Chosen Palette: Calm Neutrals with a touch of Blue -->
+    <!-- Application Structure Plan: The application is designed with a non-linear, thematic structure. It features three main sections accessible via a sticky top navigation: "行程概览" (Overview), "每日计划" (Daily Plan), and "美食与咖啡指南" (Food & Coffee Guide). The Overview now includes a dedicated, clickable hotel recommendation card and a visual summary chart. The Daily Plan uses a tabbed interface for Day 1/2 with expandable cards where restaurant names are clickable links. The Food & Coffee Guide presents all venues as interactive cards with clickable links to Dianping. This structure was chosen for superior usability, allowing users to directly access booking/review pages and explore information based on their immediate needs. -->
+    <!-- Visualization & Content Choices: Report Info: Hotel recommendations. -> Goal: Provide actionable, high-quality lodging options. -> Viz/Presentation Method: A dedicated HTML card with clickable links. -> Interaction: Click to open Dianping page. -> Justification: Directly addresses a key user requirement and makes booking/research seamless. Report Info: Chronological daily itinerary with dining spots. -> Goal: Organize a dense schedule clearly with integrated, clickable dining options. -> Viz/Presentation Method: Tabbed interface with expandable HTML/CSS cards. -> Interaction: Click tabs for days; click cards to expand; click restaurant names to open links. -> Justification: Enhances the original design by making dining choices within the itinerary directly actionable. Report Info: Restaurant & Cafe list. -> Goal: Showcase all venues attractively with ratings and links. -> Viz/Presentation Method: A responsive grid of styled HTML cards with clickable titles. -> Interaction: Click title to open Dianping page. -> Justification: A visually appealing and highly functional directory. Library/Method: Chart.js (Canvas), HTML/CSS/Tailwind, Vanilla JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-    <title>苏宁双城记 - 交互式行程助手</title>
+    <title>深圳两日游：交互式探索指南 (含酒店与链接)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,26 +16,31 @@
     <style>
         body {
             font-family: 'Noto Sans SC', sans-serif;
-            background-color: #fdfcf9;
-            color: #334155;
+            background-color: #f8f7f4;
+            color: #4a4a4a;
         }
         .nav-button {
             transition: all 0.3s ease;
             border-bottom: 2px solid transparent;
         }
         .nav-button.active {
-            border-bottom-color: #3b82f6;
-            color: #3b82f6;
+            border-bottom-color: #2563eb;
+            color: #2563eb;
             font-weight: 600;
         }
         .content-section {
             display: none;
+            animation: fadeIn 0.5s ease-in-out;
         }
         .content-section.active {
             display: block;
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .day-tab.active {
-            background-color: #3b82f6;
+            background-color: #2563eb;
             color: white;
         }
         .details-card {
@@ -50,272 +55,167 @@
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
-        .checklist-item.checked {
-            text-decoration: line-through;
-            color: #94a3b8;
-        }
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 300px;
+            max-width: 320px;
             margin-left: auto;
             margin-right: auto;
-            height: 300px;
-            max-height: 300px;
+            height: 320px;
+            max-height: 320px;
+        }
+        .clickable-link {
+            color: #2563eb;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .clickable-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <h1 class="text-xl md:text-2xl font-bold text-slate-800">苏宁双城记</h1>
-                <nav class="flex space-x-4">
-                    <button data-target="prep" class="nav-button active text-sm md:text-base px-2 py-1">行前准备</button>
-                    <button data-target="itinerary" class="nav-button text-sm md:text-base px-2 py-1">每日行程</button>
-                    <button data-target="food" class="nav-button text-sm md:text-base px-2 py-1">风味指南</button>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800">深圳城市探索</h1>
+                <nav class="flex space-x-2 md:space-x-4">
+                    <button data-target="overview" class="nav-button active text-sm md:text-base px-2 py-1">行程概览</button>
+                    <button data-target="itinerary" class="nav-button text-sm md:text-base px-2 py-1">每日计划</button>
+                    <button data-target="food" class="nav-button text-sm md:text-base px-2 py-1">美食与咖啡</button>
                 </nav>
             </div>
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
         
-        <!-- Section: Pre-trip Prep -->
-        <section id="prep" class="content-section active">
+        <!-- Section: Overview -->
+        <section id="overview" class="content-section active">
             <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-slate-900">战略蓝图：您的行前准备简报</h2>
-                <p class="mt-2 text-lg text-slate-600">成功的旅行始于周密的准备。这里是您出发前需要完成的关键任务和信息汇总。</p>
-            </div>
-            
-            <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-                <h3 class="text-xl font-bold mb-4 text-slate-800">住宿枢纽：您的战略支点</h3>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-semibold text-blue-600">📍 苏州: 苏州山塘街逸扉酒店</h4>
-                        <p class="text-sm text-slate-500 mt-1">2024年新开业，紧邻山塘街，便于夜游后步行返回，极大优化游览体验。</p>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-green-600">📍 南京: 南京新街口总统府颐景臻选酒店</h4>
-                        <p class="text-sm text-slate-500 mt-1">2024年新开业，位于新街口与总统府之间，交通便利，是探索全城的理想基地。</p>
-                    </div>
-                </div>
+                <h2 class="text-3xl font-bold text-slate-900">科技脉搏与咖啡醇香</h2>
+                <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">欢迎来到您的专属深圳探索指南。这个交互式行程将引导您穿梭于深圳的摩天楼宇与艺术街区之间，体验其独特的双重魅力。本部分将为您展示此次旅程的核心构成与住宿选择，让您对未来两天的探索有一个直观的认识。</p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-8">
-                <!-- Booking Checklist -->
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-bold mb-4 text-slate-800">黄金周要务：前瞻性预订清单</h3>
-                    <p class="text-slate-500 mb-6">在黄金周出行，“随性”是高效旅行的天敌。请点击下方项目以标记完成。</p>
-                    <ul id="checklist" class="space-y-4">
-                        <li class="checklist-item flex items-center cursor-pointer">
-                            <span class="mr-3 text-blue-500 text-2xl">✅</span>
-                            <div>
-                                <strong class="block">高铁车票 (苏州-南京)</strong>
-                                <span class="text-sm text-slate-500">提前14天开放预订，请第一时间购买。</span>
-                            </div>
-                        </li>
-                        <li class="checklist-item flex items-center cursor-pointer">
-                            <span class="mr-3 text-blue-500 text-2xl">✅</span>
-                            <div>
-                                <strong class="block">苏州博物馆 门票预约</strong>
-                                <span class="text-sm text-slate-500">通过官方渠道实名制分时段预约。</span>
-                            </div>
-                        </li>
-                        <li class="checklist-item flex items-center cursor-pointer">
-                           <span class="mr-3 text-blue-500 text-2xl">✅</span>
-                            <div>
-                                <strong class="block">中山陵 门票预约</strong>
-                                <span class="text-sm text-slate-500">节假日名额紧张，务必提前规划。</span>
-                            </div>
-                        </li>
-                        <li class="checklist-item flex items-center cursor-pointer">
-                            <span class="mr-3 text-blue-500 text-2xl">✅</span>
-                            <div>
-                                <strong class="block">拙政园等园林 门票</strong>
-                                <span class="text-sm text-slate-500">建议线上购票，避免现场排队。</span>
-                            </div>
-                        </li>
-                        <li class="checklist-item flex items-center cursor-pointer">
-                            <span class="mr-3 text-blue-500 text-2xl">✅</span>
-                            <div>
-                                <strong class="block">酒店住宿预订</strong>
-                                <span class="text-sm text-slate-500">尽快完成两地酒店预订锁定房源。</span>
-                            </div>
-                        </li>
+            <div class="grid lg:grid-cols-5 gap-8 items-start">
+                <div class="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-slate-800">行程焦点分析</h3>
+                    <p class="text-slate-500 mb-6">本次旅程经过精心设计，旨在平衡不同维度的体验。从图表中可以看出，我们将投入约一半的时间进行城市与科技地标的探索，同时也会有充足的时间沉浸在艺术氛围与精品咖啡的醇香之中，确保一次张弛有度的深度游。</p>
+                    <ul class="text-sm space-y-2 text-slate-600">
+                        <li><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span><strong>城市与科技探索：</strong>登上云端，感受深圳速度。</li>
+                        <li><span class="inline-block w-3 h-3 rounded-full bg-teal-500 mr-2"></span><strong>艺术与文化栖居：</strong>漫步创意园区，发现设计之美。</li>
+                        <li><span class="inline-block w-3 h-3 rounded-full bg-amber-500 mr-2"></span><strong>咖啡与休闲时光：</strong>在特色咖啡馆，品味城市另一面。</li>
                     </ul>
-                </div>
-
-                <!-- Digital Toolbox -->
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-bold mb-4 text-slate-800">数字化工具箱：您的智能出行助手</h3>
-                    <p class="text-slate-500 mb-6">科学的旅程离不开智能工具的赋能。请在出行前下载并熟悉以下应用。</p>
-                    <div class="space-y-4">
-                        <div class="flex items-start">
-                            <span class="text-2xl mr-4">🗺️</span>
-                            <div>
-                                <strong class="block">地图导航</strong>
-                                <p class="text-sm text-slate-500">高德地图或百度地图，用于实时路况和路线规划。</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <span class="text-2xl mr-4">🍜</span>
-                            <div>
-                                <strong class="block">餐饮探索</strong>
-                                <p class="text-sm text-slate-500">大众点评，用于寻找和验证餐厅口碑。</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <span class="text-2xl mr-4">🚇</span>
-                            <div>
-                                <strong class="block">公共交通APP</strong>
-                                <p class="text-sm text-slate-500">苏州使用“苏e行”，南京使用“与宁同行”，支持扫码乘车。</p>
-                            </div>
+                     <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-4 text-slate-800">住宿甄选 (2022年后开业)</h3>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="font-semibold">
+                                <a href="https://www.dianping.com/shop/G7sZqHkPqGk4j5iH" target="_blank" class="clickable-link">深圳文华东方酒店</a>
+                            </h4>
+                            <p class="text-sm text-slate-500 mt-1">位于福田CBD核心，深业上城内，拥有绝佳的城市景观。2022年初开业，设施崭新，服务品质卓越，是体验深圳都市奢华生活的理想之选。</p>
                         </div>
                     </div>
+                </div>
+                <div class="lg:col-span-2 chart-container">
+                    <canvas id="tripFocusChart"></canvas>
                 </div>
             </div>
         </section>
 
         <!-- Section: Itinerary -->
         <section id="itinerary" class="content-section">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-slate-900">行程实录：一份精心铺陈的四日叙事</h2>
-                <p class="mt-2 text-lg text-slate-600">这不仅仅是日程表，更是体验价值最大化的战略蓝图。点击下方每日卡片展开详细安排。</p>
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">分步探索：您的每日计划</h2>
+                <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">这里是您未来两天的详细行动蓝图。我们已将行程按天拆分，您可以点击下方的每日卡片展开或折叠详细安排，轻松掌握每一天的节奏与重点。</p>
             </div>
             
-            <div class="flex flex-col md:flex-row gap-8">
-                <div class="md:w-1/3 lg:w-1/4">
-                    <div class="chart-container mb-8">
-                        <canvas id="tripFocusChart"></canvas>
-                    </div>
-                    <div id="day-tabs" class="flex md:flex-col gap-2">
-                        <button class="day-tab w-full text-left p-3 rounded-lg transition active" data-day="day1">第一天：苏州初见</button>
-                        <button class="day-tab w-full text-left p-3 rounded-lg transition" data-day="day2">第二天：双城记</button>
-                        <button class="day-tab w-full text-left p-3 rounded-lg transition" data-day="day3">第三天：南京深读</button>
-                        <button class="day-tab w-full text-left p-3 rounded-lg transition" data-day="day4">第四天：金陵余味</button>
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8">
+                <div class="mb-6 border-b border-slate-200">
+                    <div id="day-tabs" class="flex -mb-px space-x-4">
+                        <button class="day-tab text-lg font-medium py-3 px-4 border-b-2 border-transparent transition active" data-day="day1">第一天：科技浪潮与艺术栖居</button>
+                        <button class="day-tab text-lg font-medium py-3 px-4 border-b-2 border-transparent transition" data-day="day2">第二天：云端视野与城市绿洲</button>
                     </div>
                 </div>
 
-                <div class="md:w-2/3 lg:w-3/4">
+                <div>
                     <!-- Day 1 -->
                     <div id="day1" class="day-content space-y-4">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">上午：抵达与安顿 🚄</h4>
-                                <p class="text-sm text-slate-500">抵达苏州，入住山塘街旁新酒店。</p>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">上午：城市速写 🏛️</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                            <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">抵达苏州火车站后，搭乘地铁6号线前往 <strong class="text-blue-600">苏州山塘街逸扉酒店</strong> 办理入住。这条新线路将极大提升您的游览效率。</p>
-                            </div>
-                        </div>
-                         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">午后：文化核心探索 🏛️</h4>
-                                <p class="text-sm text-slate-500">参观苏州博物馆，品尝地道苏帮菜。</p>
-                            </div>
-                            <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">搭乘地铁6号线至“拙政园苏博站”，参观苏州博物馆（需预约）。午餐于附近的“吴门人家”，品尝响油鳝糊、樱桃肉等名菜。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600"><strong>起点：</strong>深圳博物馆（历史民俗馆）。通过“深圳改革开放史”展厅，快速了解这座城市的崛起之路（建议1.5小时）。<br><strong>交通：</strong>乘坐地铁至 **市民中心站**。</p>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">下午：园林漫步 🌳</h4>
-                                <p class="text-sm text-slate-500">拙政园或狮子林，二选一深度游。</p>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">午餐：市民中心的烟火气 🍜</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                            <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">根据精力在拙政园（宏大）与狮子林（奇巧）中选择其一。两者均在步行范围内，深度游览更能体会园林精髓。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600">在市民中心或连城新天地附近，推荐在 <a href="https://www.dianping.com/shop/l6g3SoqYjD4n9A7P" target="_blank" class="clickable-link">gaga鲜语</a> 享用午餐，其茶饮与简餐的结合充满活力。</p>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">傍晚：古街夜色 🏮</h4>
-                                <p class="text-sm text-slate-500">漫步七里山塘，晚餐后步行回酒店。</p>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">下午 & 咖啡站点 #1 🎨☕️</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                            <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">日暮时分游览山塘街，感受“红尘中一二等富贵风流之地”的繁华。晚餐在山塘街区域寻找符合评分标准的本地菜馆。餐后轻松步行回酒店，无需担忧夜间交通。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600"><strong>核心：</strong>华侨城创意文化园 (OCT-LOFT)。在由旧工业区改造的艺术心脏地带，探索画廊、书店和设计小铺。<br><strong>交通：</strong>乘坐地铁1号线至 **侨城东站**。<br><strong>咖啡站：</strong>在创意园内的 <a href="https://www.dianping.com/shop/H93mFmY1tqgD2e4G" target="_blank" class="clickable-link">Gee Coffee Roasters</a>，品尝深圳精品咖啡元老店的自家烘焙风味。推荐 **“Dirty”** 或季节限定特调。</p>
+                            </div>
+                        </div>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">傍晚与晚餐 🌆</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
+                            </div>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600"><strong>终点：</strong>深圳湾公园。从后海站步行前往，欣赏壮阔的城市天际线与日落。<br><strong>晚餐：</strong>在深圳湾万象城或海岸城商圈，自由选择心仪的餐厅。</p>
                             </div>
                         </div>
                     </div>
                     <!-- Day 2 -->
                     <div id="day2" class="day-content hidden space-y-4">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">上午：姑苏晨味与告别 🍜</h4>
-                                <p class="text-sm text-slate-500">品尝苏式头汤面，拜访寒山寺。</p>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">上午 & 咖啡站点 #2 🏙️☕️</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">前往“裕兴记面馆”体验地道苏式早餐，推荐“两面黄”。之后前往寒山寺，感受《枫桥夜泊》的诗意与钟声。</p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">下午：高铁穿梭与南京初抵 🌆</h4>
-                                <p class="text-sm text-slate-500">高铁前往南京，入住新街口附近酒店。</p>
-                            </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">返回酒店取行李，搭乘高铁前往南京。抵达后换乘地铁至 <strong class="text-green-600">南京新街口总统府颐景臻选酒店</strong> 安顿。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600"><strong>起点：</strong>平安金融中心 Free Sky 云际观光层。在116层360度俯瞰“上帝视角”下的城市脉络。<br><strong>交通：</strong>乘坐地铁1/3号线至 **购物公园站**。<br><strong>咖啡站：</strong>在购物公园附近的 <a href="https://www.dianping.com/shop/k9PLoA4fM8iGfVqS" target="_blank" class="clickable-link">KUDDO COFFEE</a>，品尝一杯清爽平衡的特调，如 **“菠萝冰美式”** 或 **“桂花酒酿拿铁”**。</p>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">傍晚：秦淮风月与老城厢 🛶</h4>
-                                <p class="text-sm text-slate-500">夜游夫子庙，探访老门东，品尝地道小吃。</p>
+                         <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">午餐：CBD的午间奏鸣曲 🍱</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">乘坐地铁3号线至夫子庙，游览夫子庙与老门东历史街区。晚餐于“民国红公馆”，餐后在“莲湖糕团店”品尝赤豆元宵。</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Day 3 -->
-                    <div id="day3" class="day-content hidden space-y-4">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">上午：钟山风云 ⛰️</h4>
-                                <p class="text-sm text-slate-500">拜谒中山陵，参观美龄宫。</p>
-                            </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">乘坐地铁2号线至苜蓿园站，尽早进入钟山风景区。核心目标是拜谒中山陵（需预约），攀登392级石阶。随后可前往美龄宫参观。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600">在平安金融中心或购物公园周边的商场内解决午餐，选择丰富，丰俭由人。</p>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">下午：总统府探秘 🏛️</h4>
-                                <p class="text-sm text-slate-500">深度游览总统府，见证近代史变迁。</p>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">下午 & 咖啡站点 #3 🌳☕️</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">乘坐地铁至大行宫站，步行至总统府。请为此处预留至少2.5-3小时，这里融合了中式园林与西式办公楼，是近代史的缩影。</p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">傍晚：都市脉搏 🌃</h4>
-                                <p class="text-sm text-slate-500">在新街口商圈自由探索晚餐。</p>
-                            </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">从总统府出来即是南京最繁华的新街口。今晚可自由探索，利用大众点评寻找符合您评分标准的现代餐饮。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600"><strong>核心：</strong>莲花山公园。登上山顶广场，瞻仰邓小平同志铜像，俯瞰由他开启的奇迹之城。<br><strong>交通：</strong>乘坐地铁3/4号线至 **少年宫站**。<br><strong>咖啡站：</strong>在八卦岭或南头古城等社区，寻找 <a href="https://www.dianping.com/shop/l1g9Uo8Wv9j8fA3M" target="_blank" class="clickable-link">Something For</a>，体验一杯充满惊喜的“隐藏菜单”。</p>
                             </div>
                         </div>
-                    </div>
-                    <!-- Day 4 -->
-                    <div id="day4" class="day-content hidden space-y-4">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">上午：金陵味道与告别 🦆</h4>
-                                <p class="text-sm text-slate-500">品尝鸭血粉丝汤或汤包，从容返程。</p>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <div class="p-4 cursor-pointer toggle-details flex justify-between items-center bg-slate-50">
+                                <h4 class="font-bold text-lg text-slate-800">晚餐：告别晚宴 🍽️</h4>
+                                <span class="text-2xl transform transition-transform">▼</span>
                             </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">深入体验南京的“鸭都”文化，选择一家本地小店品尝鸭血粉丝汤或汤包。之后轻松漫步，整理行装，准备返程。</p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="p-4 cursor-pointer toggle-details">
-                                <h4 class="font-bold text-lg">下午：归途 👋</h4>
-                                <p class="text-sm text-slate-500">结束愉快的苏宁双城之旅。</p>
-                            </div>
-                             <div class="details-card bg-slate-50/50 px-4 border-t border-slate-200">
-                                <p class="text-slate-600">办理退房手续，乘坐地铁前往南京南站或禄口机场，满载而归。</p>
+                            <div class="details-card bg-white px-4">
+                                <p class="text-slate-600">前往 **深业上城 (UpperHills)**，在这一设计独特的城市综合体中，选择一家高品质餐厅，为旅程完美收官。</p>
                             </div>
                         </div>
                     </div>
@@ -323,44 +223,44 @@
             </div>
         </section>
 
-        <!-- Section: Food Guide -->
+        <!-- Section: Food & Coffee Guide -->
         <section id="food" class="content-section">
             <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-slate-900">食事考：一份精选的苏宁风味指南</h2>
-                <p class="mt-2 text-lg text-slate-600">美食是了解一座城市文化最直接的方式。这里是本次行程的核心餐饮推荐。</p>
+                <h2 class="text-3xl font-bold text-slate-900">美食与咖啡指南</h2>
+                <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">咖啡与美食是本次探索的灵魂。本章节为您集中展示所有推荐的餐饮地点，它们是体验深圳创意与生活气息的最佳窗口。点击名称即可跳转至大众点评页面。</p>
             </div>
-            <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-2xl font-bold mb-2 text-blue-600">苏州之味</h3>
-                    <p class="text-slate-500 mb-6">不时不食的精致，甜咸适中，注重原味与鲜美。</p>
-                    <div class="space-y-6">
-                        <div>
-                            <h4 class="font-bold text-lg">吴门人家</h4>
-                            <p class="text-sm text-slate-600 mt-1"><strong>招牌:</strong> 松鼠鳜鱼, 响油鳝糊, 樱桃肉</p>
-                            <p class="text-sm text-slate-500 mt-1"><strong>建议:</strong> 紧邻拙政园与苏博馆，是游览后正餐的绝佳选择。环境古雅，菜品正宗。</p>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-lg">裕兴记面馆</h4>
-                            <p class="text-sm text-slate-600 mt-1"><strong>招牌:</strong> 两面黄, 枫镇大肉面</p>
-                            <p class="text-sm text-slate-500 mt-1"><strong>建议:</strong> 体验地道苏式早餐或午餐的必到之处。建议错开饭点高峰。</p>
-                        </div>
-                    </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 transition hover:shadow-2xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">
+                        <a href="https://www.dianping.com/shop/H93mFmY1tqgD2e4G" target="_blank" class="clickable-link">Gee Coffee Roasters</a>
+                    </h3>
+                    <p class="text-sm font-semibold text-blue-600 mb-4">南山区 / 华侨城创意园</p>
+                    <p class="text-slate-600 mb-4"><strong>风格:</strong> 工业风、自家烘焙、专业<br><strong>评分:</strong> 4.0</p>
+                    <p class="text-slate-500">深圳精品咖啡的先锋，特调富有层次感，能让您体验到咖啡豆的本味与创意的完美结合。</p>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-2xl font-bold mb-2 text-green-600">南京之味</h3>
-                    <p class="text-slate-500 mb-6">江湖气的醇厚，以鸭闻名，小吃文化发达。</p>
-                    <div class="space-y-6">
-                        <div>
-                            <h4 class="font-bold text-lg">民国红公馆</h4>
-                            <p class="text-sm text-slate-600 mt-1"><strong>招牌:</strong> 视季节菜单而定，主打氛围感</p>
-                            <p class="text-sm text-slate-500 mt-1"><strong>建议:</strong> 游览夫子庙与老门东后，享用一顿充满民国风情的晚餐。建议提前预订。</p>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-lg">莲湖糕团店</h4>
-                            <p class="text-sm text-slate-600 mt-1"><strong>招牌:</strong> 赤豆元宵, 桂花夹心小元宵</p>
-                            <p class="text-sm text-slate-500 mt-1"><strong>建议:</strong> 秦淮河畔的必访小吃店。适合作为餐后甜点或下午茶，品尝最地道的南京味道。</p>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 transition hover:shadow-2xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">
+                        <a href="https://www.dianping.com/shop/k9PLoA4fM8iGfVqS" target="_blank" class="clickable-link">KUDDO COFFEE</a>
+                    </h3>
+                    <p class="text-sm font-semibold text-teal-600 mb-4">福田区 / CBD</p>
+                    <p class="text-slate-600 mb-4"><strong>风格:</strong> 现代、明亮、连锁精品<br><strong>评分:</strong> 4.1</p>
+                    <p class="text-slate-500">口味清爽，创意十足，是理解深圳年轻、高效的都市文化的窗口，为您在CBD的探索注入活力。</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 transition hover:shadow-2xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">
+                        <a href="https://www.dianping.com/shop/l1g9Uo8Wv9j8fA3M" target="_blank" class="clickable-link">Something For</a>
+                    </h3>
+                    <p class="text-sm font-semibold text-amber-600 mb-4">福田或南山 / 社区</p>
+                    <p class="text-slate-600 mb-4"><strong>风格:</strong> 独立、设计感、主理人风格<br><strong>评分:</strong> 4.3</p>
+                    <p class="text-slate-500">“目的地”式咖啡馆，提供独一无二的味觉体验，适合寻求惊喜的深度咖啡爱好者。</p>
+                </div>
+                 <div class="bg-white rounded-xl shadow-lg p-6 transition hover:shadow-2xl hover:-translate-y-1">
+                    <h3 class="text-xl font-bold mb-2">
+                        <a href="https://www.dianping.com/shop/l6g3SoqYjD4n9A7P" target="_blank" class="clickable-link">gaga鲜语</a>
+                    </h3>
+                    <p class="text-sm font-semibold text-green-600 mb-4">福田区 / 市民中心</p>
+                    <p class="text-slate-600 mb-4"><strong>风格:</strong> 水果茶、轻食、休闲<br><strong>评分:</strong> 3.9</p>
+                    <p class="text-slate-500">深圳本土成长起来的知名品牌，以新鲜水果茶和健康轻食著称，环境轻松，充满都市活力。</p>
                 </div>
             </div>
         </section>
@@ -368,7 +268,7 @@
     </main>
 
     <footer class="text-center py-8 mt-8 border-t border-slate-200">
-        <p class="text-slate-500">祝您旅途愉快，满载而归。</p>
+        <p class="text-slate-500">祝您在深圳，既能感受到它的速度与激情，也能品味到它细腻、多元的另一面。</p>
     </footer>
 
     <script>
@@ -378,73 +278,59 @@
             const dayTabs = document.querySelectorAll('.day-tab');
             const dayContents = document.querySelectorAll('.day-content');
             const detailToggles = document.querySelectorAll('.toggle-details');
-            const checklistItems = document.querySelectorAll('.checklist-item');
 
-            // Main Navigation
+            function switchTab(buttons, contents, targetId, activeClass, contentHideClass = 'hidden') {
+                buttons.forEach(btn => btn.classList.remove(activeClass));
+                const activeButton = Array.from(buttons).find(b => b.dataset.target === targetId);
+                if(activeButton) activeButton.classList.add(activeClass);
+
+                contents.forEach(section => {
+                    if (contentHideClass) section.classList.add(contentHideClass);
+                    else section.classList.remove('active');
+
+                    if (section.id === targetId) {
+                        if (contentHideClass) section.classList.remove(contentHideClass);
+                        else section.classList.add('active');
+                    }
+                });
+            }
+
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    const targetId = button.dataset.target;
-
-                    navButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-
-                    contentSections.forEach(section => {
-                        section.classList.remove('active');
-                        if (section.id === targetId) {
-                            section.classList.add('active');
-                        }
-                    });
+                    switchTab(navButtons, contentSections, button.dataset.target, 'active', null);
                 });
             });
 
-            // Itinerary Day Tabs
             dayTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    const targetDay = tab.dataset.day;
-
-                    dayTabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-
-                    dayContents.forEach(content => {
-                        content.classList.add('hidden');
-                        if (content.id === targetDay) {
-                            content.classList.remove('hidden');
-                        }
-                    });
+                    switchTab(dayTabs, dayContents, tab.dataset.day, 'active', 'hidden');
                 });
             });
 
-            // Expandable Cards
             detailToggles.forEach(toggle => {
                 toggle.addEventListener('click', () => {
                     const detailsCard = toggle.nextElementSibling;
+                    const icon = toggle.querySelector('span');
                     detailsCard.classList.toggle('open');
+                    icon.style.transform = detailsCard.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
                 });
             });
 
-            // Checklist
-            checklistItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    item.classList.toggle('checked');
-                });
-            });
-
-            // Chart.js Doughnut Chart
             const ctx = document.getElementById('tripFocusChart').getContext('2d');
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['文化探索 (园林, 博物馆, 历史遗迹)', '美食体验 (正餐与小吃)', '交通与休憩'],
+                    labels: ['城市与科技探索', '艺术与文化栖居', '咖啡与休闲时光'],
                     datasets: [{
-                        label: '行程焦点',
-                        data: [55, 30, 15],
+                        data: [45, 30, 25],
                         backgroundColor: [
-                            'rgba(59, 130, 246, 0.8)', // blue-500
-                            'rgba(22, 163, 74, 0.8)',  // green-600
-                            'rgba(100, 116, 139, 0.8)' // slate-500
+                            'rgba(59, 130, 246, 0.9)',
+                            'rgba(20, 184, 166, 0.9)',
+                            'rgba(245, 158, 11, 0.9)'
                         ],
-                        borderColor: '#fdfcf9',
-                        borderWidth: 4
+                        borderColor: '#f8f7f4',
+                        borderWidth: 5,
+                        hoverOffset: 8
                     }]
                 },
                 options: {
@@ -452,33 +338,23 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                             labels: {
-                                font: {
-                                    size: 12,
-                                    family: "'Noto Sans SC', sans-serif"
-                                },
-                                color: '#475569',
-                                boxWidth: 12,
-                                padding: 15
-                            }
+                            display: false
                         },
                         tooltip: {
+                            bodyFont: {
+                                family: "'Noto Sans SC', sans-serif"
+                            },
+                            titleFont: {
+                                family: "'Noto Sans SC', sans-serif"
+                            },
                             callbacks: {
                                 label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += context.parsed + '%';
-                                    }
-                                    return label;
+                                    return `${context.label}: ${context.parsed}%`;
                                 }
                             }
                         }
                     },
-                    cutout: '60%'
+                    cutout: '65%'
                 }
             });
         });
